@@ -3,6 +3,7 @@ const { Router } = require("express");
 const {
     getSpecificUser,
     getAllUsers,
+    getMyUser,
     createUser,
     updateUser,
     deleteUser,
@@ -14,6 +15,8 @@ const router = Router();
 router.post("/", createUser);
 
 router.get("/", validateJWT, getAllUsers);
+
+router.get("/me", validateJWT, getMyUser);
 
 router.get("/:id",validateJWT, getSpecificUser);
 

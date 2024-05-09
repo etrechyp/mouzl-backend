@@ -1,12 +1,13 @@
 const { response } = require("express");
 const bcryptjs = require("bcryptjs");
+const JWT = require("jsonwebtoken")
 const dbConnection = require('../utils/dbConnection');
 
-const { SALT } = process.env
+const { SALT, SECRET } = process.env;
 
 const getSpecificUser = async (req, res = response) => {
     try {
-        const user = await dbConnection.query(`SELECT * FROM users WHERE id = ${req.params.id}`);
+        const user = await dbConnection.query(`SELECT * FROM usuarios WHERE id = ${req.params.id}`);
         res.status(200).json(user[0]);
     } catch (error) {
         res.status(500).json({
@@ -17,7 +18,7 @@ const getSpecificUser = async (req, res = response) => {
 
 const getAllUsers = async (req, res = response) => {
     try {
-        const users = await dbConnection.query('SELECT * FROM users');
+        const users = await dbConnection.query('SELECT * FROM usuarios');
         res.status(200).json({ users });
     } catch (error) {
         res.status(500).json({
@@ -26,32 +27,63 @@ const getAllUsers = async (req, res = response) => {
     }
 };
 
+const getMyUser = async (req, res = response) => {
+    try {
+        let token = req.headers.authorization;
+        const resp = JWT.verify(token.slice(7), SECRET);
+
+        const usuario = await dbConnection.query(`SELECT * FROM usuarios WHERE id = ${resp.id}`);
+        const persona = await dbConnection.query(`SELECT * FROM personas WHERE id = ${usuario[0].persona_id}`);
+        
+        persona[0].username = resp.username;
+        persona[0].rol_id = resp.rol_id;
+        
+        res.status(200).json(persona[0]);
+    } catch (error) {
+        res.status(500).json({
+            message: error.message
+        });
+    }
+};
+
+
 const createUser = async (req, res = response) => {
     try {
-        const { firstName, lastName, email, password } = req.body
+        const { username, firstName, lastName, email, password, genero, fecha_nacimiento, telefono } = req.body;
+        console.log(req.body)
 
         if (!firstName || !lastName || !email || !password) {
-            return res.status(409).json({ message: "please fill all fields" });
+            return res.status(409).json({ message: "Please fill all fields" });
         }
         if (password.length < 6) {
-            return res.status(409).json({ message: "password must be at least 6 characters" });
+            return res.status(409).json({ message: "Password must be at least 6 characters" });
         }
 
         let hashPass = bcryptjs.hashSync(password, Number(SALT));
 
-        const response = await dbConnection.query(`INSERT into users (firstName, lastName, email, password) values('${firstName}','${lastName}','${email}','${hashPass}')`)
+        const resultPersona = await dbConnection.query(`
+            INSERT INTO personas (nombres, apellidos, correo, genero, fecha_nacimiento, telefono) 
+            VALUES ('${firstName}', '${lastName}', '${email}', '${genero}', '${fecha_nacimiento}', '${telefono}')
+        `);
+
+        const personaId = resultPersona;
+
+        await dbConnection.query(`
+            INSERT INTO usuarios (username, password, persona_id, rol_id) 
+            VALUES ('${username}', '${hashPass}', '${personaId}', 2)
+        `);
 
         res.status(201).json({
-            id: response,
+            id: personaId,
             firstName,
             lastName,
             email,
             password: hashPass
-        })
+        });
     } catch (error) {
         res.status(409).json({
             message: error.message
-        })
+        });
     }
 };
 
@@ -60,27 +92,28 @@ const updateUser = async (req, res = response) => {
         const { id } = req.params;
         const { firstName, lastName, email, password } = req.body;
 
-        let updateQuery = `UPDATE users SET`;
+        let updateUsuariosQuery = `UPDATE usuarios SET`;
+        let updatePersonasQuery = `UPDATE personas SET`;
 
         if (firstName) {
-            updateQuery += ` firstName = '${firstName}',`;
+            updatePersonasQuery += ` nombres = '${firstName}',`;
         }
         if (lastName) {
-            updateQuery += ` lastName = '${lastName}',`;
+            updatePersonasQuery += ` apellidos = '${lastName}',`;
         }
         if (email) {
-            updateQuery += ` email = '${email}',`;
+            updatePersonasQuery += ` correo = '${email}',`;
         }
         if (password) {
-            const hashedPassword = bcryptjs.hashSync(password, NUmber(SALT));
-            updateQuery += ` password = '${hashedPassword}',`;
+            const hashedPassword = bcryptjs.hashSync(password, Number(SALT));
+            updateUsuariosQuery += ` password = '${hashedPassword}',`;
         }
 
-        updateQuery = updateQuery.slice(0, -1);
+        updatePersonasQuery = updatePersonasQuery.slice(0, -1) + ` WHERE id = '${id}'`;
+        updateUsuariosQuery = updateUsuariosQuery.slice(0, -1) + ` WHERE persona_id = '${id}'`;
 
-        updateQuery += ` WHERE id = ${id}`;
-
-        await dbConnection.query(updateQuery);
+        await dbConnection.query(updatePersonasQuery);
+        await dbConnection.query(updateUsuariosQuery);
 
         res.status(204).json({
             ok: true
@@ -92,12 +125,11 @@ const updateUser = async (req, res = response) => {
     }
 };
 
+
 const deleteUser = async (req, res = response) => {
     try {
-        const user = await dbConnection.query(`DELETE FROM users WHERE id = ${req.params.id}`);
-        res.status(204).json({
-            user
-        });
+        await dbConnection.query(`DELETE FROM usuarios WHERE id = '${req.params.id}'`);
+        res.status(204).json();
     } catch (error) {
         res.status(500).json({
             message: error.message
@@ -108,6 +140,7 @@ const deleteUser = async (req, res = response) => {
 module.exports = {
     getSpecificUser,
     getAllUsers,
+    getMyUser,
     createUser,
     updateUser,
     deleteUser

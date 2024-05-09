@@ -4,10 +4,10 @@ const bcryptjs = require("bcryptjs");
 const dbConnection = require('../utils/dbConnection')
 
 const login = async (req, res = response) => {
-    const { email, password } = req.body;
+    const { username, password } = req.body;
 
     try {
-        const user = await dbConnection.query(`SELECT * FROM users WHERE email = '${email}'`)
+        const user = await dbConnection.query(`SELECT * FROM usuarios WHERE username = '${username}'`)
         if (!user[0]) {
             return res.status(400).json({
                 message: "User not found",
@@ -17,18 +17,25 @@ const login = async (req, res = response) => {
         const validPassword = bcryptjs.compareSync(password, user[0].password);
         if (!user[0] || !validPassword) {
             return res.status(400).json({
-                message: "Wrong email or password",
+                message: "Wrong username or password",
             });
         }
 
-        const token = await generateJWT(user[0].id);
+        console.log(user)
+
+        let payload = {
+            id: user[0].id,
+            username: user[0].username,
+            rol_id: user[0].rol_id
+        }
+
+        const token = await generateJWT(payload);
 
         res.json({
             user: {
                 id: user[0].id,
-                firstName: user[0].firstName,
-                lastName: user[0].lastName,
-                email: user[0].email,
+                rol_id: user[0].rol_id,
+                username: user[0].username,
             },
             token,
         });

@@ -4,9 +4,8 @@ const dbConnection = require('../utils/dbConnection');
 
 const { SECRET } = process.env
 
-const generateJWT = (id) => {
+const generateJWT = (payload) => {
     return new Promise((resolve, reject) => {
-        const payload = { id };
 
         JWT.sign(
             payload,
@@ -39,7 +38,7 @@ const validateJWT = async (req = request, res = response, next) => {
         const token = await session.split(' ')[1];
         const { id } = JWT.verify(token, SECRET);
 
-        const user = await dbConnection.query(`SELECT * from users WHERE id = ${id}`)
+        const user = await dbConnection.query(`SELECT * from usuarios WHERE id = ${id}`)
 
         if (!user[0]) {
             return res.status(401).json({
