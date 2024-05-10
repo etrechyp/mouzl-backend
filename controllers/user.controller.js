@@ -50,9 +50,8 @@ const getMyUser = async (req, res = response) => {
 const createUser = async (req, res = response) => {
     try {
         const { username, firstName, lastName, email, password, genero, fecha_nacimiento, telefono } = req.body;
-        console.log(req.body)
 
-        if (!firstName || !lastName || !email || !password) {
+        if (!firstName || !lastName || !email || !password || !genero || !username || !fecha_nacimiento) {
             return res.status(409).json({ message: "Please fill all fields" });
         }
         if (password.length < 6) {

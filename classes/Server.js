@@ -7,8 +7,10 @@ class Server {
         this.port = process.env.PORT || 3000;
 
         this.paths = {
-            users: "/api/user",
-            auth: "/api/auth"
+            usuario: "/api/usuario",
+            auth: "/api/auth",
+            entregas: "/api/entrega",
+            files: "/api/file"
         };
 
         this.middlewares();
@@ -24,7 +26,9 @@ class Server {
 
     routes() {
         this.app.use(this.paths.auth, require("../routes/auth.routes"));
-        this.app.use(this.paths.users, require("../routes/user.routes"));
+        this.app.use(this.paths.usuario, require("../routes/user.routes"));
+        this.app.use(this.paths.entregas, require("../routes/entregas.routes"))
+        this.app.use(this.paths.files, require("../routes/files.routes"))
     }
 
     listen() {
