@@ -11,7 +11,7 @@ const generateJWT = (payload) => {
             payload,
             SECRET,
             {
-                expiresIn: "24h",
+                expiresIn: payload.expiresIn,
             },
             (err, token) => {
                 if (err) {
@@ -24,6 +24,7 @@ const generateJWT = (payload) => {
         );
     });
 };
+
 
 const validateJWT = async (req = request, res = response, next) => {
     const session = req.headers.authorization;

@@ -1,11 +1,22 @@
 const fs = require('fs');
 const path = require('path');
-const { v4: uuidv4 } = require('uuid');
+const multer = require('multer');
 
 const response = require('express');
 const dbConnection = require('../utils/dbConnection');
 
 const storagePath = path.join(__dirname, '../storage');
+
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, storagePath);
+    },
+    filename: function (req, file, cb) {
+        cb(null, file.originalname);
+    }
+});
+
+const upload = multer({ storage: storage });
 
 getFile = async (req, res = response) => {
     try {
@@ -18,19 +29,24 @@ getFile = async (req, res = response) => {
     }
 }
 
-
-//FIXME: revisar NO FUNCIONA
 setFile = async (req, res = response) => {
     try {
-        const { buffer } = req.file;
-        const filename = uuidv4() + path.extname(req.file.originalname);
-        
-        const filePath = path.join(storagePath, filename);
-        fs.writeFileSync(filePath, buffer);
+        upload.single('file')(req, res, async function (res, err) {
+            console.log(res)
+            if (err instanceof multer.MulterError) {
+                return res.status(500).json({ message: err.message });
+            } else if (err) {
+                return res.status(500).json({ message: err.message });
+            }
 
-        await dbConnection.query(`UPDATE entregas SET image = ?`, [filePath]);
+            // Aquí el archivo ha sido cargado correctamente
+            // Puedes acceder al archivo en req.file
 
-        res.status(200).json({ message: 'Archivo guardado exitosamente.' });
+            // Procesar el archivo si es necesario
+
+            // Enviar respuesta al cliente
+            res.status(200).json({ message: 'Archivo guardado exitosamente.', res });
+        });
     } catch (error) {
         res.status(500).json({
             message: error.message
