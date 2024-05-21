@@ -38,7 +38,10 @@ const getMyUser = async (req, res = response) => {
         persona[0].username = resp.username;
         persona[0].rol_id = resp.rol_id;
         
-        res.status(200).json(persona[0]);
+        res.status(200).json({
+            user: usuario[0],
+            persona: persona[0]
+        });
     } catch (error) {
         res.status(500).json({
             message: error.message

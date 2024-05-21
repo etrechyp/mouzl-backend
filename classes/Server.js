@@ -10,11 +10,12 @@ class Server {
             usuario: "/api/usuario",
             auth: "/api/auth",
             entregas: "/api/entrega",
-            files: "/api/file"
+            files: "/api/files"
         };
 
         this.middlewares();
         this.routes();
+        this.staticFiles();
     }
 
     middlewares() {
@@ -29,6 +30,10 @@ class Server {
         this.app.use(this.paths.usuario, require("../routes/user.routes"));
         this.app.use(this.paths.entregas, require("../routes/entregas.routes"))
         this.app.use(this.paths.files, require("../routes/files.routes"))
+    }
+
+    staticFiles() {
+        this.app.use(express.static('public'));
     }
 
     listen() {

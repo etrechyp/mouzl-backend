@@ -4,7 +4,7 @@ const JWT = require("jsonwebtoken");
 const bcryptjs = require("bcryptjs");
 const dbConnection = require('../utils/dbConnection')
 
-const expiration = 960  
+const expiration = 60 * 60 * 24 * 7
 
 const login = async (req, res = response) => {
     const { username, password } = req.body;
@@ -24,11 +24,10 @@ const login = async (req, res = response) => {
             });
         }
 
-        console.log(user)
-
         let payload = {
             id: user[0].id,
             username: user[0].username,
+            persona_id: user[0].persona_id,
             rol_id: user[0].rol_id,
             expiresIn: expiration
         }
@@ -39,6 +38,7 @@ const login = async (req, res = response) => {
             user: {
                 id: user[0].id,
                 rol_id: user[0].rol_id,
+                persona_id: user[0].persona_id,
                 username: user[0].username,
             },
             token,

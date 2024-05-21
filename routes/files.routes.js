@@ -1,14 +1,14 @@
 const { Router } = require("express");
 const { validateJWT } = require("../middleware/session");
 const {
-    getFile,
-    setFile
+    setFile,
+    getFile
 } = require("../controllers/files.controller")
 
 const router = Router();
 
-router.get("/:id", validateJWT, getFile);
+router.post("/", setFile);
 
-router.post("/", validateJWT, setFile);
+router.get("/:id", getFile)
 
 module.exports = router;

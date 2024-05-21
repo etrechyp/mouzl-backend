@@ -1,27 +1,47 @@
 const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
-
-const response = require('express');
+const { v4: uuidv4 } = require('uuid');
+const response = require('express').response;
 const dbConnection = require('../utils/dbConnection');
 
-const storagePath = path.join(__dirname, '../storage');
+
+const date = new Date();
+const year = date.getFullYear();
+const month = String(date.getMonth() + 1).padStart(2, '0');
+const day = String(date.getDate()).padStart(2, '0');
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
+        const username = req.query.username;
+       
+        const storagePath = path.join(__dirname, '../public', username, `${year}-${month}-${day}`);
+
+        fs.mkdirSync(storagePath, { recursive: true });
         cb(null, storagePath);
     },
     filename: function (req, file, cb) {
-        cb(null, file.originalname);
+        const uniqueName = uuidv4() + path.extname(file.originalname);
+        cb(null, uniqueName);
     }
 });
 
 const upload = multer({ storage: storage });
 
-getFile = async (req, res = response) => {
+const getFile = async (req, res = response) => {
     try {
-        const entregas = await dbConnection.query(`SELECT * FROM entregas`);
-        res.status(200).json(entregas[0]);
+        const { id } = req.params;
+        const [imagen] = await dbConnection.query(`SELECT * FROM imagenes WHERE id = ${id}`);
+
+        if (!imagen) {
+            return res.status(404).json({
+                message: 'Imagen no encontrada'
+            });
+        }
+
+        const imagePath = path.join(__dirname, '..', 'public', imagen.path);
+
+        res.sendFile(imagePath);
     } catch (error) {
         res.status(500).json({
             message: error.message
@@ -29,23 +49,28 @@ getFile = async (req, res = response) => {
     }
 }
 
-setFile = async (req, res = response) => {
+const setFile = async (req, res = response) => {
     try {
-        upload.single('file')(req, res, async function (res, err) {
-            console.log(res)
-            if (err instanceof multer.MulterError) {
-                return res.status(500).json({ message: err.message });
-            } else if (err) {
-                return res.status(500).json({ message: err.message });
+        upload.single('file')(req, res, async function (err) {
+            if (err) {
+                return res.status(500).json({
+                    message: err.message
+                });
             }
 
-            // Aquí el archivo ha sido cargado correctamente
-            // Puedes acceder al archivo en req.file
+            const file = req.file;
+            const fileId = file.filename;
+            const fileUrl = `/${req.query.username}/${year}-${month}-${day}/${file.filename}`;
 
-            // Procesar el archivo si es necesario
+            await dbConnection.query(
+                `INSERT INTO imagenes (filename, path) VALUES ('${file.filename}', '${fileUrl}')`,
+            );
 
-            // Enviar respuesta al cliente
-            res.status(200).json({ message: 'Archivo guardado exitosamente.', res });
+            res.status(200).json({
+                message: 'Archivo guardado exitosamente.',
+                fileId: fileId,
+                fileUrl: fileUrl
+            });
         });
     } catch (error) {
         res.status(500).json({
@@ -55,6 +80,6 @@ setFile = async (req, res = response) => {
 }
 
 module.exports = {
-    getFile,
-    setFile
+    setFile,
+    getFile
 }
