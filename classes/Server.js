@@ -10,9 +10,8 @@ class Server {
             usuario: "/api/usuario",
             auth: "/api/auth",
             entregas: "/api/entrega",
-            files: "/api/files",
-            receptor: "/api/receptor",
-            repartidor: "/api/repartidor"
+            imagen: "/api/imagen",
+            persona: "/api/persona"
         };
 
         this.middlewares();
@@ -31,9 +30,8 @@ class Server {
         this.app.use(this.paths.auth, require("../routes/auth.routes"));
         this.app.use(this.paths.usuario, require("../routes/user.routes"));
         this.app.use(this.paths.entregas, require("../routes/entregas.routes"))
-        this.app.use(this.paths.files, require("../routes/files.routes"))
-        this.app.use(this.paths.receptor, require("../routes/receptor.routes"))
-        this.app.use(this.paths.repartidor, require("../routes/repartidor.routes"))
+        this.app.use(this.paths.imagen, require("../routes/imagen.routes"))
+        this.app.use(this.paths.persona, require("../routes/persona.routes"))
     }
 
     staticFiles() {

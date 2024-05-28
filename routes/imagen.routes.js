@@ -1,14 +1,14 @@
 const { Router } = require("express");
 const { validateJWT } = require("../middleware/session");
 const {
-    setReceptor,
-    getReceptor
-} = require("../controllers/receptor.controller")
+    setImagen,
+    getImagen
+} = require("../controllers/imagen.controller")
 
 const router = Router();
 
-// router.post("/", setReceptor);
+router.post("/", validateJWT, setImagen);
 
-router.get("/:id", getReceptor)
+router.get("/:id", getImagen)
 
 module.exports = router;

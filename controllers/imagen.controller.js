@@ -28,7 +28,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-const getFile = async (req, res = response) => {
+const getImagen = async (req, res = response) => {
     try {
         const { id } = req.params;
         const [imagen] = await dbConnection.query(`SELECT * FROM imagenes WHERE id = ${id}`);
@@ -49,7 +49,7 @@ const getFile = async (req, res = response) => {
     }
 }
 
-const setFile = async (req, res = response) => {
+const setImagen = async (req, res = response) => {
     try {
         upload.single('file')(req, res, async function (err) {
             if (err) {
@@ -62,11 +62,12 @@ const setFile = async (req, res = response) => {
             const fileId = file.filename;
             const fileUrl = `/${req.query.username}/${year}-${month}-${day}/${file.filename}`;
 
-            await dbConnection.query(
+            const imagen = await dbConnection.query(
                 `INSERT INTO imagenes (filename, path) VALUES ('${file.filename}', '${fileUrl}')`,
             );
 
             res.status(200).json({
+                id: imagen,
                 message: 'Archivo guardado exitosamente.',
                 fileId: fileId,
                 fileUrl: fileUrl
@@ -80,6 +81,6 @@ const setFile = async (req, res = response) => {
 }
 
 module.exports = {
-    setFile,
-    getFile
+    setImagen,
+    getImagen
 }
