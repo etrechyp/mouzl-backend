@@ -99,7 +99,6 @@ const createEntrega = async (req, res = response) => {
 
   try {
     const {
-      id,
       factura_id,
       nombre,
       fecha,
@@ -109,21 +108,23 @@ const createEntrega = async (req, res = response) => {
       receptor_id,
     } = req.body;
 
+    const receptorIdValue = receptor_id ? `${receptor_id}` : 'NULL';
+
     let query = `
-            INSERT INTO entregas (nombre, fecha, factura_id, direccion, receptor_id, latitude, longitude, status) 
-            VALUES ('${nombre}', '${fecha}', '${factura_id}', '${direccion}', ${receptor_id}, ${latitude}, ${longitude}, 'pendiente')
-        `;
+      INSERT INTO entregas (nombre, fecha, factura_id, direccion, receptor_id, latitude, longitude, status) 
+      VALUES ('${nombre}', '${fecha}', '${factura_id}', '${direccion}', ${receptorIdValue}, ${latitude}, ${longitude}, 'pendiente')
+    `;
 
     const entrega = await dbConnection.query(query, { transaction });
-
-    //TODO: orden, _consultar_stellar > consultar_aqui > crear_persona_aqui
 
     if (receptor_id) {
       const receptorQuery = `SELECT * FROM personas WHERE id = ${receptor_id}`;
       const receptor = await dbConnection.query(receptorQuery, { transaction });
 
-      if (receptor.length === 0) {
-        await transaction.rollback();
+      if (receptor[0].length === 0) {
+        if(!transaction.finished){
+          await transaction.rollback();
+        }
         return res.status(400).json({
           message: "Receptor not found",
         });
@@ -143,6 +144,8 @@ const createEntrega = async (req, res = response) => {
     });
   }
 };
+
+
 
 module.exports = {
   getSpecificEntrega,

@@ -42,16 +42,7 @@ const setPersona = async (req, res) => {
     longitude,
   } = req.body;
 
-  if (
-    !id ||
-    !nombres ||
-    !apellidos ||
-    !fecha_nacimiento ||
-    !telefono ||
-    !genero ||
-    !direccion ||
-    !correo
-  ) {
+  if (!id || !nombres || !apellidos || !telefono || !direccion) {
     return res.status(400).json({
       message: "Todos los campos obligatorios deben ser proporcionados.",
     });
@@ -59,22 +50,23 @@ const setPersona = async (req, res) => {
 
   const insertQuery = `
     INSERT INTO personas (id, nombres, apellidos, fecha_nacimiento, genero, correo, telefono, direccion, latitude, longitude, createdAt, updatedAt)
-    VALUES (${id}, '${nombres}', '${apellidos}', '${fecha_nacimiento}', '${genero}', '${correo}', '${telefono}', '${direccion}', ${
-    latitude ? latitude : "NULL"
-  }, ${longitude ? longitude : "NULL"}, NOW(), NOW());
+    VALUES ('${id}', '${nombres}', '${apellidos}', ${fecha_nacimiento ? `'${fecha_nacimiento}'` : 'NULL'}, ${genero ? `'${genero}'` : 'NULL'}, ${correo ? `'${correo}'` : 'NULL'}, '${telefono}', '${direccion}', ${latitude ? `'${latitude}'` : 'NULL'}, ${longitude ? `'${longitude}'` : 'NULL'}, NOW(), NOW());
   `;
 
   const transaction = await sequelize.transaction();
 
   try {
     await dbConnection.query(insertQuery, { transaction });
+
     await transaction.commit();
     res.status(201).json({
       id: id,
       message: "Persona creada exitosamente",
     });
   } catch (error) {
-    await transaction.rollback();
+    if(!transaction.finished){
+      await transaction.rollback();
+    }
     res.status(500).json({ message: `Error: ${error.message}` });
   }
 };
