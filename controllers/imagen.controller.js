@@ -3,7 +3,7 @@ const path = require('path');
 const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
 const response = require('express').response;
-const dbConnection = require('../utils/dbConnection');
+const db = require('../utils/db');
 
 
 const date = new Date();
@@ -31,7 +31,7 @@ const upload = multer({ storage: storage });
 const getImagen = async (req, res = response) => {
     try {
         const { id } = req.params;
-        const [imagen] = await dbConnection.query(`SELECT * FROM imagenes WHERE id = ${id}`);
+        const [imagen] = await db.query(`SELECT * FROM imagenes WHERE id = ${id}`);
 
         if (!imagen) {
             return res.status(404).json({
@@ -62,7 +62,7 @@ const setImagen = async (req, res = response) => {
             const fileId = file.filename;
             const fileUrl = `/${req.query.username}/${year}-${month}-${day}/${file.filename}`;
 
-            const imagen = await dbConnection.query(
+            const imagen = await db.query(
                 `INSERT INTO imagenes (filename, path) VALUES ('${file.filename}', '${fileUrl}')`,
             );
 

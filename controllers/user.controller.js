@@ -1,14 +1,14 @@
 const { response } = require("express");
 const bcryptjs = require("bcryptjs");
 const JWT = require("jsonwebtoken");
-const dbConnection = require("../utils/dbConnection");
-const { sequelize } = dbConnection;
+const db = require("../utils/db");
+const { sequelize } = db;
 
 const { SALT, SECRET } = process.env;
 
 const getSpecificUser = async (req, res = response) => {
   try {
-    const user = await dbConnection.query(
+    const user = await db.query(
       `SELECT * FROM usuarios WHERE id = ${req.params.id}`
     );
     res.status(200).json(user[0]);
@@ -21,7 +21,7 @@ const getSpecificUser = async (req, res = response) => {
 
 const getAllUsers = async (req, res = response) => {
   try {
-    const users = await dbConnection.query("SELECT * FROM usuarios");
+    const users = await db.query("SELECT * FROM usuarios");
     res.status(200).json({ users });
   } catch (error) {
     res.status(500).json({
@@ -35,10 +35,10 @@ const getMyUser = async (req, res = response) => {
     let token = req.headers.authorization;
     const resp = JWT.verify(token.slice(7), SECRET);
 
-    const usuario = await dbConnection.query(
+    const usuario = await db.query(
       `SELECT * FROM usuarios WHERE id = ${resp.id}`
     );
-    const persona = await dbConnection.query(
+    const persona = await db.query(
       `SELECT * FROM personas WHERE id = ${usuario[0].persona_id}`
     );
 
@@ -105,7 +105,7 @@ const createUser = async (req, res = response) => {
 
     let hashPass = bcryptjs.hashSync(contrasena, Number(SALT));
 
-    await dbConnection.query(
+    await db.query(
       `
       INSERT INTO personas (id, nombres, apellidos, correo, genero, fecha_nacimiento, telefono, direccion) 
       VALUES (${id}, '${nombres}', '${apellidos}', '${correo}', '${genero}', '${fecha_nacimiento}', '${telefono}', '${direccion}');
@@ -113,7 +113,7 @@ const createUser = async (req, res = response) => {
       { transaction }
     );
 
-    await dbConnection.query(
+    await db.query(
       `
       INSERT INTO usuarios (usuario, contrasena, persona_id, rol_id) 
       VALUES ('${usuario}', '${hashPass}', '${id}', ${rolId})
@@ -168,8 +168,8 @@ const updateUser = async (req, res = response) => {
     updateUsuariosQuery =
       updateUsuariosQuery.slice(0, -1) + ` WHERE persona_id = '${id}'`;
 
-    await dbConnection.query(updatePersonasQuery);
-    await dbConnection.query(updateUsuariosQuery);
+    await db.query(updatePersonasQuery);
+    await db.query(updateUsuariosQuery);
 
     res.status(204).json({
       ok: true,
@@ -183,7 +183,7 @@ const updateUser = async (req, res = response) => {
 
 const deleteUser = async (req, res = response) => {
   try {
-    await dbConnection.query(
+    await db.query(
       `DELETE FROM usuarios WHERE id = '${req.params.id}'`
     );
     res.status(204).json();

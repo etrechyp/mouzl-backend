@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+require('../utils/cleanup');
 
 class Server {
     constructor() {
@@ -41,6 +42,8 @@ class Server {
     listen() {
         this.app.listen(this.port, () => {
             console.log(`Server run in port ${this.port}`);
+            
+            //TODO: cerrar todas las sesiones cuando arranque el server
         });
     }
 }

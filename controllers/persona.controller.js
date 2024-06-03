@@ -1,10 +1,10 @@
 const { response } = require("express");
-const dbConnection = require("../utils/dbConnection");
-const { sequelize } = dbConnection;
+const db = require("../utils/db");
+const { sequelize } = db;
 
 const getPersona = async (req, res = response) => {
   try {
-    const receptor = await dbConnection.query(
+    const receptor = await db.query(
       `SELECT * FROM personas WHERE id = ${req.params.id}`
     );
 
@@ -18,7 +18,7 @@ const getPersona = async (req, res = response) => {
 
 const getAllPersonas = async (req, res = response) => {
   try {
-    const personas = await dbConnection.query(`SELECT * FROM personas`);
+    const personas = await db.query(`SELECT * FROM personas`);
 
     res.status(200).json(personas);
   } catch (error) {
@@ -56,7 +56,7 @@ const setPersona = async (req, res) => {
   const transaction = await sequelize.transaction();
 
   try {
-    await dbConnection.query(insertQuery, { transaction });
+    await db.query(insertQuery, { transaction });
 
     await transaction.commit();
     res.status(201).json({
@@ -116,7 +116,7 @@ const updatePersona = async (req, res = response) => {
   const transaction = await sequelize.transaction();
 
   try {
-    await dbConnection.query(updateQuery, { transaction });
+    await db.query(updateQuery, { transaction });
     await transaction.commit();
     res.status(200).json({
       id,
@@ -140,7 +140,7 @@ const deletePersona = async (req, res = response) => {
   `;
 
   try {
-    const existingPersona = await dbConnection.query(selectQuery);
+    const existingPersona = await db.query(selectQuery);
 
     if (existingPersona.length === 0) {
       return res.status(404).json({ message: "La persona no existe." });
@@ -154,7 +154,7 @@ const deletePersona = async (req, res = response) => {
     const transaction = await sequelize.transaction();
 
     try {
-      await dbConnection.query(deleteQuery, { transaction });
+      await db.query(deleteQuery, { transaction });
       await transaction.commit();
       res.status(200).json({ message: "Persona eliminada exitosamente" });
     } catch (error) {

@@ -1,10 +1,10 @@
 const response = require("express");
-const dbConnection = require("../utils/dbConnection");
-const { sequelize } = dbConnection;
+const db = require("../utils/db");
+const { sequelize } = db;
 
 getSpecificEntrega = async (req, res = response) => {
   try {
-    entrega = await dbConnection.query(
+    entrega = await db.query(
       `SELECT * FROM entregas WHERE id = ${req.params.id}`
     );
     res.status(200).json(entrega[0]);
@@ -25,7 +25,7 @@ getAllEntregas = async (req, res = response) => {
       query += ` AND repartidor_id = ${repartidor_id}`;
     }
 
-    const entregas = await dbConnection.query(query);
+    const entregas = await db.query(query);
 
     res.status(200).json(entregas);
   } catch (error) {
@@ -84,7 +84,7 @@ const updateEntrega = async (req, res = response) => {
     query += updates.join(", ");
     query += ` WHERE id = ${id}`;
 
-    const entrega = await dbConnection.query(query);
+    const entrega = await db.query(query);
 
     res.status(200).json(entrega);
   } catch (error) {
@@ -115,11 +115,11 @@ const createEntrega = async (req, res = response) => {
       VALUES ('${nombre}', '${fecha}', '${factura_id}', '${direccion}', ${receptorIdValue}, ${latitude}, ${longitude}, 'pendiente')
     `;
 
-    const entrega = await dbConnection.query(query, { transaction });
+    const entrega = await db.query(query, { transaction });
 
     if (receptor_id) {
       const receptorQuery = `SELECT * FROM personas WHERE id = ${receptor_id}`;
-      const receptor = await dbConnection.query(receptorQuery, { transaction });
+      const receptor = await db.query(receptorQuery, { transaction });
 
       if (receptor[0].length === 0) {
         if(!transaction.finished){
