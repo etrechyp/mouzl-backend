@@ -22,7 +22,10 @@ class Server {
 
     middlewares() {
         this.app.use(cors({
-            credentials: false,
+            origin: '*',
+            methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+            allowedHeaders: ['Content-Type', 'Authorization'],
+            credentials: false
         }));
         this.app.use(express.json());
     }

@@ -144,34 +144,32 @@ const createUser = async (req, res = response) => {
 const updateUser = async (req, res = response) => {
   try {
     const { id } = req.params;
-    const { nombres, apellidos, correo, contrasena } = req.body;
+    const { contrasenaActual, nuevaContrasena } = req.body;
 
-    let updateUsuariosQuery = `UPDATE usuarios SET`;
-    let updatePersonasQuery = `UPDATE personas SET`;
+    const userQuery = `SELECT contrasena FROM usuarios WHERE persona_id = '${id}'`;
+    const [user] = await db.query(userQuery);
 
-    if (nombres) {
-      updatePersonasQuery += ` nombres = '${nombres}',`;
-    }
-    if (apellidos) {
-      updatePersonasQuery += ` apellidos = '${apellidos}',`;
-    }
-    if (correo) {
-      updatePersonasQuery += ` correo = '${correo}',`;
-    }
-    if (contrasena) {
-      const hashedPassword = bcryptjs.hashSync(contrasena, Number(SALT));
-      updateUsuariosQuery += ` contrasena = '${hashedPassword}',`;
+    if (!user) {
+      return res.status(404).json({
+        ok: false,
+        message: 'Usuario no encontrado',
+      });
     }
 
-    updatePersonasQuery =
-      updatePersonasQuery.slice(0, -1) + ` WHERE id = '${id}'`;
-    updateUsuariosQuery =
-      updateUsuariosQuery.slice(0, -1) + ` WHERE persona_id = '${id}'`;
+    const isPasswordValid = bcryptjs.compareSync(contrasenaActual, user.contrasena);
+    if (!isPasswordValid) {
+      return res.status(400).json({
+        ok: false,
+        message: 'La contraseña actual es incorrecta',
+      });
+    }
 
-    await db.query(updatePersonasQuery);
-    await db.query(updateUsuariosQuery);
+    const hashedPassword = bcryptjs.hashSync(nuevaContrasena, Number(SALT));
 
-    res.status(204).json({
+    const updateQuery = `UPDATE usuarios SET contrasena = '${hashedPassword}' WHERE persona_id = '${id}'`;
+    await db.query(updateQuery);
+
+    res.status(200).json({
       ok: true,
     });
   } catch (error) {
